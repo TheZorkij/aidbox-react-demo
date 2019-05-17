@@ -67,8 +67,7 @@ This section has moved here: https://facebook.github.io/create-react-app/docs/de
 ### `npm run build` fails to minify
 
 This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
-# sample-text
-=======
+
 # aidbox-react-demo
 A CRUD demonstration app for Aidbox on ReactJS
->>>>>>> e95a049ac11ded2540f586e9197acfa91b9b6932
+
