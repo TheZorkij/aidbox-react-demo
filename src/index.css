@@ -1,13 +1,129 @@
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
-    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    padding: 20px;
+    margin: 2px;
+    font-family: sans-serif
+}
+header {
+    text-align: center;
+}
+.layout {
+    display: flex;
+    justify-content: space-around;
+    margin: auto;
+    width: 80%;
+}
+.dataframe {
+    float: left;
+    width: 100%;
+    padding: 1px;
+}
+.dataframe#list{
+    width: 80%;
+}
+.dataframe#info{
+}
+h2 {
+    padding-left: 10px;
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
-    monospace;
+.patient-props {
+}
+.row-info {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 5px;
+    padding: 12px;
+    padding-right: 1rem;
+}
+.textfield {
+    padding: 8px;
+    border: 1px solid grey;
+    border-radius: 5px;
+}
+.buttonpane {
+    padding: 12px;
+    padding-bottom: 1rem;
+}
+.btn {
+    color: white;
+    border: 1px solid grey;
+    padding: 1rem;
+    background-color: DodgerBlue;
+    margin-right: 4px;
+}
+.btn:hover {
+    background-color: darkcyan;
+}
+
+.controls {
+    margin-left: 12px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+.searchpane {
+    display: flex;
+    flex-wrap: wrap;
+    margin-right: 12px;
+    padding-right: 1rem;
+}
+.textfield#search {
+    flex: 1 1 auto;
+    width: 1%;
+    margin-right: 0;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.textfield#find {
+    display: flex;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+    margin-left: -1px;
+}
+.navpane {
+    display: block;
+}
+.navpane ul {
+    display: flex;
+    padding-left: 0;
+}
+.navpane li {
+    display: inline;
+    padding: 0;
+    min-width: 2.5rem;
+    text-align: center;
+}
+.navpane li a {
+    position: relative;
+    text-decoration: none;
+    padding: 12px;
+    display: block;
+    margin-left: -1px;
+    border: 1px solid grey;
+    background-color: #FFF;
+}
+.nav-disabled a {
+    color: grey;
+}
+.nav a {
+    color: blue;
+}
+.nav :hover {
+    background-color: lightgrey;
+}
+
+#newpatient {
+    padding: 0.5rem;
+}
+#del {
+    background-color: Tomato;
+}
+#del:hover {
+    background-color: darkred;
+}
+@media screen and (max-width:1000px) {
+    .layout {
+        display: flex;
+        flex-direction: column;
+    }
 }
