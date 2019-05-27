@@ -5,6 +5,7 @@ import {
     HashRouter
 } from "react-router-dom";
 import Fhir from "fhir.js";
+import update from 'immutability-helper'
 
 let client = Fhir({
     baseUrl: process.env.SERVER_URL || 'http://localhost:8888',
@@ -12,60 +13,27 @@ let client = Fhir({
     auth: {user: 'zorkijofficial@gmail.com', pass: 'secret'}
 });
 
-let args = {
-    resource: {
-        resourceType: "Patient",
-        id: '00000',
-        gender: 'pidor',
-        name: [{family: 'xxx'}],
-    }
-};
-
-function Entry(props) {
-    return (
-        <button>
-            {props.value}
-        </button>
-    );
-}
-
-class PatientList extends Component {
-    renderEntry(i) {
-        console.log(this.props.kal);
-        return <Entry value={this.props.kal} />
-    }
-
-    render() {
-        return (
-            <div>
-                {this.renderEntry(0)}
-                {this.renderEntry(1)}
-                {this.renderEntry(2)}
-            </div>
-        );
-    }
-}
+//TODO fix postalCode, fix addPatient
 
 class Main extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            i: 0,
+            current: 0,
+            count: 0,
             createMode: false,
-            kal: 'a',
-            patient: [{
-                id: null,
-                firstName: 'kal govna',
-                lastName: null,
-                gender: null,
-                birthdate: null,
-                street: null,
-                state: null,
-                city: null,
-                postalCode: null,
-                phones: null,
-                emails: null
-            }],
+            isLoaded: false,
+            searchParam: null,
+            patient: [],
+            firstName: '',
+            lastName: '',
+            gender: '',
+            birthdate: '',
+            street: '',
+            state: '',
+            city: '',
+            postalCode: '',
+            phones: '',
         };
     }
 
@@ -75,65 +43,148 @@ class Main extends Component {
         })
     }
 
-    addPatient() {  //this is working nigga
-        /*return (client.create(args)) working!!! */
-        /*this.setState({i: this.state.i + 1});*/
-        //console.log(this.state.i);
+    //~~~~~~~ CRUD ~~~~~~~~~~
+
+    //!!! must have 4 digits in birthdate
+    addPatient() {
+        const args = {
+            resource: {
+                resourceType: "Patient",
+                name: [{
+                    given: [this.state.firstName],
+                    family: this.state.lastName,
+                }],
+                gender: this.state.gender,
+                birthDate: this.state.birthdate,
+                address: [{
+                    line: [this.state.street],
+                    city: this.state.city,
+                    state: this.state.state,
+                    postalCode: this.state.postalCode,
+                }],
+                telecom: [{
+                    system: 'phone',
+                    value: this.state.phones
+                }]
+            }
+        }
         const that = this;
-        client.search({resource: {resourceType: 'Patient'}})
-              .then(function(res) {
-                  const bundle = res.data;
-                  const id = bundle.entry[0].resource.id;
-                  return id;
-              }).then(function(id) {
-                  that.setState({kal: id})
-                  console.log(id);
-              });
+        client.create(args).then(() => {that.getPatients()});
+        this.setState({createMode: false});
     }
 
-    handle(i) {
-            const patient = this.state.patient.slice(0, this.state.i + 1);
-            const current = patient[patient.length - 1];
-            this.setState({
-                patient: patient.concat([{
-                    firstName: i,
-                }]),
-                i: patient.length,
-            });
+    deletePatient() {
+        const args = {
+            resource: {
+                resourceType: "Patient",
+                id: this.state.patient[this.state.current].id,
+            }
+        }
+        const that = this;
+        client.delete(args).then(() => {that.getPatients()});
     }
+
+    updatePatient() {
+        const patient = this.state.patient[this.state.current];
+        const args = {
+            resource: {
+                resourceType: "Patient",
+                id: this.state.patient[this.state.current].id,
+                name: [{
+                    given: [patient.firstName],
+                    family: patient.lastName,
+                }],
+                gender: patient.gender,
+                birthDate: patient.birthdate,
+                address: [{
+                    line: [patient.street],
+                    city: patient.city,
+                    state: patient.state,
+                    postalCode: patient.postalCode,
+                }],
+                telecom: [{
+                    system: 'phone',
+                    value: patient.phones
+                }]
+            }
+        }
+        const that = this;
+        client.update(args).then(() => {that.getPatients()});
+    }
+
+    getPatients() {
+        const that = this;
+        const param = this.state.searchParam;
+        (param ? client.search({resource: {resourceType: "Patient"}, query: {name: param}}) : client.search({resource: {resourceType: "Patient"}}))
+              .then(function(res) {
+                  const bundle = res.data;
+                  //console.log(bundle.total);
+                  that.setState({
+                      current: 0,
+                      count: 0,
+                      patient: [],
+                  });
+                  return bundle;
+              })
+              .then(function(bundle) {
+                  const entry = bundle.entry;
+                  //console.log(entry[0].resource.name[0].given[0]);   !!! gives names
+                  //const firstname = entry[0].resource.name[0].given[0];
+                  //console.log(firstname);
+                  let fhirdata = [];
+                  entry.map((arr, i) => {
+                      fhirdata = fhirdata.concat([{
+                          id: entry[i].resource.id,
+                          firstName: entry[i].resource.name[0].given[0],
+                          lastName: entry[i].resource.name[0].family,
+                          gender: entry[i].resource.gender,
+                          birthdate: entry[i].resource.birthDate,
+                          street: entry[i].resource.address[0].line[0],
+                          state: entry[i].resource.address[0].state,
+                          city: entry[i].resource.address[0].city,
+                          postalCode: entry[i].resource.address[0].postalCode,
+                          phones: entry[i].resource.telecom[0].value,
+                      }])
+                  })
+                  //console.log(that.state.patient);
+                  //console.log(fhirdata);
+                  that.setState({
+                      patient: fhirdata,
+                      current: fhirdata.length - 1,
+                      count: fhirdata.length,
+                  })
+              })
+    }
+
+    //~~~~~~~~~~~~~~~~~~~~~~~
 
     render() {
         const update = this.state.createMode ? {display: 'none'} : {};
         const submit = this.state.createMode ? {} : {display: 'none'};
-        const that = this;
         const patient = this.state.patient;
-        const current = patient[this.state.i];
-        //if I call some shit here it will execute every time some shit happens
-        const moves = patient.map((step, move, hui) => {
-            console.log(step);
-            console.log(hui);
-            //console.log(move);
-            const desc = move ? 'Go to move #' + move : 'Go to game start';
-            return (<li key={move}>
-                <button>
-                {desc}
-        </button>
-</li>)
+        const currentPatient = patient[this.state.current];
+        if (!this.state.isLoaded) {
+            this.getPatients();
+            this.setState({isLoaded: true});
+        }
+        const fhirdata = patient.map((arr, i) => {
+            //console.log(arr);
+            const firstname = patient[i].firstName;
+            const lastname = patient[i].lastName;
+            return (<li key={i}>
+                <button onClick={() => {this.setState({current: i, createMode: false})}}>
+                 {firstname} {lastname}
+                </button>
+            </li>)
         });
-        //client.search({resource: {resourceType: 'Patient'}})
-        //      .then(function(res) {
-        //         const bundle = res.data;
-        //          const id = bundle.entry[0].resource.id;
-        //          return id;
-        //      }).then(function(id) {
-        //          that.setState({kal: id})
-        //          console.log(id);
-        //      });
+        //console.log(this.state.current);
+        console.log(this.state.patient);
+        //console.log(this.state.patient[this.state.current].lastName);
+        console.log(this.state.lastName);
         return (
                 <div>
                     <header>
                         <h1>Medical Card</h1>
-                        {/*<p>AIDBOX_URL: {window._env_.AIDBOX_URL}</p>*/}
                     </header>
                     <div class="layout">
                         <div class="dataframe" id="list">
@@ -142,22 +193,24 @@ class Main extends Component {
                                 <HashRouter>
                                     <form class="controls">
                                         <div class="searchpane">
-                                            <input type="text" class="textfield" id="search" placeholder="Search..." />
-                                            <input type="button" name="find" class="textfield" id="find" value="Find" />
+                                            <input type="text" class="textfield" id="search" placeholder="Search..."
+                                                   value={this.state.searchParam}
+                                                   onChange={e => {
+                                                       this.setState({searchParam: e.target.value})
+                                                   }} />
+                                            <input type="button" name="find" class="textfield" id="find" value="Find"
+                                                   onClick={() => this.getPatients()} />
                                         </div>
                                         <div>
-                                            {/*<input type="button" name="newPatient" class="btn" id="newpatient" value="New patient" onClick={this.action()} />*/}
                                             <input type="button" class="btn" value="New patient" onClick={() => this.createMode()} />
-                                            <input type="button" onClick={(i) => this.handle(i)} />
                                         </div>
                                         <div>
                                             <ul>
-                                                {moves}
-                                                {/*<PatientList kal={this.state.kal}/>*/}
+                                                {fhirdata}
                                             </ul>
                                         </div>
                                         <div class="navpane">
-                                            <p>Total count: </p>
+                                            <p>Total count: {this.state.count}</p>
                                             <ul>
                                                 <li class="nav-disabled"><NavLink to="#">«</NavLink></li>
                                                 <li class="nav-disabled"><NavLink to="#">‹</NavLink></li>
@@ -176,61 +229,148 @@ class Main extends Component {
                                 <form class="patient-props">
                                     <div class="row-info">
                                         <label for="firstName">First name</label>
-                                        <input name="firstName" class="textfield" value={this.state.kal}
-                                               onChange={e => this.setState({kal: e.target.value})} />
+                                        <input name="firstName" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.firstName : this.state.firstName}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.firstName = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.firstName = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="row-info">
                                         <label for="lastName">Last name</label>
-                                        <input name="lastName" class="textfield" value={this.state.patient[0].lastName}
-                                               onChange={e => this.setState({patient:[{lastName: e.target.value}]})} />
+                                        <input name="lastName" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.lastName : this.state.lastName}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.lastName = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.lastName = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="row-info">
                                         <label for="gender">Gender</label>
-                                        <input name="gender" class="textfield" value={this.state.patient[0].gender}
-                                               onChange={e => this.setState({patient:[{gender: e.target.value}]})}/>
+                                        <input name="gender" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.gender : this.state.gender}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.gender = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.gender = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="row-info">
                                         <label for="birthDate">Birth date</label>
-                                        <input name="birthDate" class="textfield" value={this.state.patient[0].birthdate}
-                                               onChange={e => this.setState({patient:[{birthdate: e.target.value}]})}/>
+                                        <input name="birthDate" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.birthdate : this.state.birthdate}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.birthdate = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.birthdate = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="row-info">
                                         <label for="street">Street</label>
-                                        <input name="street" class="textfield" value={this.state.patient[0].street}
-                                               onChange={e => this.setState({patient:[{street: e.target.value}]})}/>
+                                        <input name="street" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.street : this.state.street}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.street = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.street = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="row-info">
                                         <label for="state">State</label>
-                                        <input name="state" class="textfield" value={this.state.patient[0].state}
-                                               onChange={e => this.setState({patient:[{state: e.target.value}]})}/>
+                                        <input name="state" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.state : this.state.state}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.state = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.state = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="row-info">
                                         <label for="city">City</label>
-                                        <input name="city" class="textfield" value={this.state.patient[0].city}
-                                               onChange={e => this.setState({patient:[{city: e.target.value}]})}/>
+                                        <input name="city" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.city : this.state.city}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.city = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.city = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="row-info">
                                         <label for="postalCode">Postal code</label>
-                                        <input name="postalCode" class="textfield" value={this.state.patient[0].postalCode}
-                                               onChange={e => this.setState({patient:[{postalCode: e.target.value}]})}/>
+                                        <input name="postalCode" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.postalCode : this.state.postalCode}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.postalCode = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.postalCode = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="row-info">
                                         <label for="phones">Phones</label>
-                                        <input name="phones" class="textfield" value={this.state.patient[0].phones}
-                                               onChange={e => this.setState({patient:[{phones: e.target.value}]})}/>
-                                    </div>
-                                    <div class="row-info">
-                                        <label for="emails">Emails</label>
-                                        <input name="emails" class="textfield" value={this.state.patient[0].emails}
-                                               onChange={e => this.setState({patient:[{emails: e.target.value}]})}/>
+                                        <input name="phones" class="textfield"
+                                               value={!this.state.createMode && currentPatient ? currentPatient.phones : this.state.phones}
+                                               onChange={e => {
+                                                   if (this.state.createMode) {
+                                                       this.state.phones = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                                   else {
+                                                       currentPatient.phones = e.target.value;
+                                                       this.forceUpdate();
+                                                   }
+                                               }} />
                                     </div>
                                     <div class="buttonpane">
                                         <div style={update}>
-                                            <input type="button" name="update" class="btn" value="Update" />
-                                            <input type="button" name="delete" class="btn" id="del" value="Delete" />
+                                            <input type="button" name="update" class="btn" value="Update"
+                                                   onClick={() => this.updatePatient()} />
+                                            <input type="button" name="delete" class="btn" id="del" value="Delete"
+                                                   onClick={() => this.deletePatient()} />
                                         </div>
                                         <div style={submit}>
-                                            <input type="button" name="submit" class="btn" value="Submit" />
+                                            <input type="button" name="submit" class="btn" value="Submit" onClick={() => this.addPatient()} />
                                         </div>
                                     </div>
                                 </form>
