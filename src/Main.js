@@ -1,3 +1,7 @@
+/**
+ * @author Михаил Правиленко <zorkijofficial@gmail.com>
+ */
+
 import React, { Component } from "react";
 import {
     Route,
@@ -5,17 +9,32 @@ import {
     HashRouter
 } from "react-router-dom";
 import Fhir from "fhir.js";
-import update from 'immutability-helper'
 
+/**
+ * Создает экземпляр клиента FHIR
+ *
+ * @constructor
+ * @param {object} - параметры для соединения с сервером
+ */
 let client = Fhir({
     baseUrl: process.env.SERVER_URL || 'http://localhost:8888',
     debug: process.env.DEBUG || false,
     auth: {user: 'zorkijofficial@gmail.com', pass: 'secret'}
 });
 
-//TODO fix postalCode, fix addPatient
-
+/**
+ * Класс главного компонента приложения
+ *
+ */
 class Main extends Component {
+
+    /**
+     * Конструктор свойств компонента
+     *
+     * @constructor
+     * @this {Main}
+     * @param {object} props - свойства компонента
+    */
     constructor(props) {
         super(props);
         this.state = {
@@ -37,6 +56,11 @@ class Main extends Component {
         };
     }
 
+    /**
+     * Изменяет свойство createMode, чтобы отобразить кнопку Submit
+     *
+     * @this {Main}
+     */
     createMode() {
         this.setState({
             createMode: true,
@@ -46,6 +70,11 @@ class Main extends Component {
     //~~~~~~~ CRUD ~~~~~~~~~~
 
     //!!! must have 4 digits in birthdate
+    /**
+     * Отправляет на сервер созданного пациента
+     *
+     * @this {Main}
+     */
     addPatient() {
         const args = {
             resource: {
@@ -73,6 +102,11 @@ class Main extends Component {
         this.setState({createMode: false});
     }
 
+    /**
+     * Удаляет с сервера информацию о выбранном пациенте
+     *
+     * @this {Main}
+     */
     deletePatient() {
         const args = {
             resource: {
@@ -84,6 +118,11 @@ class Main extends Component {
         client.delete(args).then(() => {that.getPatients()});
     }
 
+    /**
+     * Обновляет информацию о пациенте на сервере
+     *
+     * @this {Main}
+    */
     updatePatient() {
         const patient = this.state.patient[this.state.current];
         const args = {
@@ -112,6 +151,11 @@ class Main extends Component {
         client.update(args).then(() => {that.getPatients()});
     }
 
+    /**
+     * Извлекает с сервера данные о пациентах
+     *
+     * @this {Main}
+    */
     getPatients() {
         const that = this;
         const param = this.state.searchParam;
@@ -158,6 +202,13 @@ class Main extends Component {
 
     //~~~~~~~~~~~~~~~~~~~~~~~
 
+
+    /**
+     * Отображает содержимое в браузере
+     *
+     * @this {Main}
+     * @return {html} код веб-страницы
+    */
     render() {
         const update = this.state.createMode ? {display: 'none'} : {};
         const submit = this.state.createMode ? {} : {display: 'none'};
@@ -228,7 +279,7 @@ class Main extends Component {
                             <div>
                                 <form class="patient-props">
                                     <div class="row-info">
-                                        <label for="firstName">First name</label>
+                                        <label for="firstName">First name *</label>
                                         <input name="firstName" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.firstName : this.state.firstName}
                                                onChange={e => {
@@ -243,7 +294,7 @@ class Main extends Component {
                                                }} />
                                     </div>
                                     <div class="row-info">
-                                        <label for="lastName">Last name</label>
+                                        <label for="lastName">Last name *</label>
                                         <input name="lastName" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.lastName : this.state.lastName}
                                                onChange={e => {
@@ -258,7 +309,7 @@ class Main extends Component {
                                                }} />
                                     </div>
                                     <div class="row-info">
-                                        <label for="gender">Gender</label>
+                                        <label for="gender">Gender *</label>
                                         <input name="gender" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.gender : this.state.gender}
                                                onChange={e => {
@@ -273,7 +324,7 @@ class Main extends Component {
                                                }} />
                                     </div>
                                     <div class="row-info">
-                                        <label for="birthDate">Birth date</label>
+                                        <label for="birthDate">Birth date *</label>
                                         <input name="birthDate" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.birthdate : this.state.birthdate}
                                                onChange={e => {
@@ -288,7 +339,7 @@ class Main extends Component {
                                                }} />
                                     </div>
                                     <div class="row-info">
-                                        <label for="street">Street</label>
+                                        <label for="street">Street *</label>
                                         <input name="street" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.street : this.state.street}
                                                onChange={e => {
@@ -303,7 +354,7 @@ class Main extends Component {
                                                }} />
                                     </div>
                                     <div class="row-info">
-                                        <label for="state">State</label>
+                                        <label for="state">State *</label>
                                         <input name="state" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.state : this.state.state}
                                                onChange={e => {
@@ -318,7 +369,7 @@ class Main extends Component {
                                                }} />
                                     </div>
                                     <div class="row-info">
-                                        <label for="city">City</label>
+                                        <label for="city">City *</label>
                                         <input name="city" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.city : this.state.city}
                                                onChange={e => {
@@ -333,7 +384,7 @@ class Main extends Component {
                                                }} />
                                     </div>
                                     <div class="row-info">
-                                        <label for="postalCode">Postal code</label>
+                                        <label for="postalCode">Postal code *</label>
                                         <input name="postalCode" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.postalCode : this.state.postalCode}
                                                onChange={e => {
@@ -348,7 +399,7 @@ class Main extends Component {
                                                }} />
                                     </div>
                                     <div class="row-info">
-                                        <label for="phones">Phones</label>
+                                        <label for="phones">Phones *</label>
                                         <input name="phones" class="textfield"
                                                value={!this.state.createMode && currentPatient ? currentPatient.phones : this.state.phones}
                                                onChange={e => {
