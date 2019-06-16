@@ -6,13 +6,14 @@ body {
 header {
     text-align: center;
 }
-a, a:active, a:focus {
+
+*:focus {
     outline: 0;
 }
-button::-moz-focus-inner,
-input::-moz-focus-inner {
+input::-moz-focus-inner,
+button::-moz-focus-inner {
     border: 0;
-    padding: 0;
+    outline: 0;
 }
 .layout {
     display: flex;
@@ -37,6 +38,7 @@ h2 {
 .patientList {
     list-style-type: none;
     width: 100%;
+    outline: 0;
 }
 .entry {
     position: relative;
@@ -54,7 +56,6 @@ h2 {
     border-left-color: dodgerblue;
     -webkit-transition-duration: 0.4s;
     transition-duration: 0.4s;
-    outline: none;
 }
 .entry:hover {
     background-color: dodgerblue;
