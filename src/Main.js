@@ -222,8 +222,8 @@ class Main extends Component {
             //console.log(arr);
             const firstname = patient[i].firstName;
             const lastname = patient[i].lastName;
-            return (<li key={i}>
-                <button onClick={() => {this.setState({current: i, createMode: false})}}>
+            return (<li class="patientList" key={i}>
+                <button class="entry" onClick={() => {this.setState({current: i, createMode: false})}}>
                  {firstname} {lastname}
                 </button>
             </li>)
@@ -253,7 +253,7 @@ class Main extends Component {
                                                    onClick={() => this.getPatients()} />
                                         </div>
                                         <div>
-                                            <input type="button" class="btn" value="New patient" onClick={() => this.createMode()} />
+                                            <input type="button" id="newpatient" class="btn" value="New patient" onClick={() => this.createMode()} />
                                         </div>
                                         <div>
                                             <ul>
